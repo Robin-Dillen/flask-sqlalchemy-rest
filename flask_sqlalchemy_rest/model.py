@@ -1,15 +1,18 @@
+import json
+from collections import Iterable
+
+from dateutil.parser import parse
 from flask import request, jsonify, current_app
 from flask.views import MethodView
-from dateutil.parser import parse
-from sqlalchemy.sql import sqltypes
 from sqlalchemy.orm.attributes import InstrumentedAttribute
-from collections import Iterable
-import json
+from sqlalchemy.sql import sqltypes
 
 
 class RestModel(MethodView):
 
-    def __init__(self, db, model, ignore_columns=[], json_columns=[], search_columns=[], join_models={}, max_page_size=100, deleted_column_key=None):
+    def __init__(self, db, model, ignore_columns=[], json_columns=[], search_columns=[], join_models={},
+                 max_page_size=100, deleted_column_key=None, get_decorator=None, post_decorator=None, put_decorator=None,
+                 delete_decorator=None):
         self.db = db
         self.model = model
         self.ignore_columns = ignore_columns
@@ -18,6 +21,11 @@ class RestModel(MethodView):
         self.join_models = join_models
         self.max_page_size = max_page_size
         self.deleted_column_key = deleted_column_key
+        # decorate the methods so the users can choose when to execute their code
+        self.get = self.get if get_decorator is None else get_decorator(self.get)
+        self.post = self.post if post_decorator is None else post_decorator(self.post)
+        self.put = self.put if put_decorator is None else put_decorator(self.get)
+        self.delete = self.delete if delete_decorator is None else delete_decorator(self.get)
 
     def get(self, id=None):
         if id is None:
