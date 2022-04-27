@@ -47,7 +47,7 @@ class Rest(object):
 
         blueprint.add_url_rule(view_func=view_func, rule='/' + url_name,
                                methods=list(set(methods).intersection(set(['GET', 'POST']))))
-        blueprint.add_url_rule(view_func=view_func, rule='/' + url_name + '/<int:id>',
+        blueprint.add_url_rule(view_func=view_func, rule='/' + url_name + '/<id>',
                                methods=list(set(methods).intersection(set(['GET', 'PUT', 'DELETE']))))
         if self.app:
             self.app.register_blueprint(blueprint)
