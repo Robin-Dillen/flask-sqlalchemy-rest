@@ -31,13 +31,13 @@ class RestModel(MethodView):
         if id is None:
             return self.query_all()
         else:
-            obj = self.model.query.get(id)
+            obj = self.model.query.get(id.split(","))
             if obj:
                 return self._resp(data=self._to_dict(obj))
             return self._resp(code=404, msg='obj not found')
 
     def delete(self, id):
-        obj = self.model.query.get(id)
+        obj = self.model.query.get(id.split(","))
         if obj:
             if self.deleted_column_key is not None and hasattr(obj, self.deleted_column_key):
                 setattr(obj, self.deleted_column_key, True)
@@ -49,14 +49,17 @@ class RestModel(MethodView):
     def post(self):
         if request.is_json:
             try:
-                obj = self.model()
-                err_msg = self._verify_params(obj, request.json)
-                if err_msg:
-                    return self._resp(code=400, msg=err_msg)
-                obj = self._update_model_from_dict(obj, request.json)
-                self.db.session.add(obj)
+                response = []
+                for index, entry in enumerate(list(request.json)):
+                    obj = self.model()
+                    err_msg = self._verify_params(obj, entry)
+                    if err_msg:
+                        return self._resp(code=400, msg=f"entry no. {index}: {err_msg}")
+                    obj = self._update_model_from_dict(obj, entry)
+                    self.db.session.add(obj)
+                    response.append({"id": obj.id})
                 self.db.session.commit()
-                return self._resp(data={"id": obj.id})
+                return self._resp(data=response)
             except Exception as e:
                 current_app.logger.error(str(e))
                 return self._resp(code=400, msg='invalid data')
@@ -64,7 +67,7 @@ class RestModel(MethodView):
 
     def put(self, id):
         if request.is_json:
-            obj = self.model.query.get(id)
+            obj = self.model.query.get(id.split(","))
             if obj:
                 try:
                     err_msg = self._verify_params(obj, request.json)
@@ -256,7 +259,6 @@ class RestModel(MethodView):
             return json.loads(text)
         except:
             return text
-        return text
 
     def _resp(self, code=200, msg="OK", data={}):
         return jsonify(code=code, msg=msg, data=data), code
