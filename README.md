@@ -79,11 +79,17 @@ And you can add params in GET url:
 &nbsp;&nbsp;&nbsp;&nbsp;**auth_decorator:** Decorator function for authentication   
 &nbsp;&nbsp;&nbsp;&nbsp;**max_page_size:** max page size in GET api  
 
-&nbsp;&nbsp;```def add_model(model, url_name=None, methods=['GET', 'POST', 'PUT', 'DELETE'], ignore_columns=[], json_columns=[], search_columns=[])```   
+&nbsp;&nbsp;```def add_model(model, url_name=None, methods=['GET', 'POST', 'PUT', 'DELETE'], ignore_columns=[], json_columns=[], search_columns=[], get_decorator=None, post_decorator=None, put_decorator=None, delete_decorator=None, ignore_duplicates=False)```   
 &nbsp;&nbsp;&nbsp;&nbsp;**model:** `SQLAlchemy.Model` object  
 &nbsp;&nbsp;&nbsp;&nbsp;**url_name:** Will be displayed in url    
 &nbsp;&nbsp;&nbsp;&nbsp;**methods:** Allowed HTTP methods. Only `GET,POST,PUT,DELETE` are allowed    
 &nbsp;&nbsp;&nbsp;&nbsp;**ignore_columns:** Ignored columns in `GET` api     
 &nbsp;&nbsp;&nbsp;&nbsp;**json_columns:** Columns to be parsed into JSON format   
-&nbsp;&nbsp;&nbsp;&nbsp;**search_columns:** Columns can query with `_serach` param in `GET` api    
+&nbsp;&nbsp;&nbsp;&nbsp;**search_columns:** Columns can query with `_search` param in `GET` api  
+&nbsp;&nbsp;&nbsp;&nbsp;**get_decorator:** A decorator(function) that can be applied to the get method    
+&nbsp;&nbsp;&nbsp;&nbsp;**post_decorator:** A decorator(function) that can be applied to the post method   
+&nbsp;&nbsp;&nbsp;&nbsp;**put_decorator:** A decorator(function) that can be applied to the put method  
+&nbsp;&nbsp;&nbsp;&nbsp;**delete_decorator:** A decorator(function) that can be applied to the delete method   
+&nbsp;&nbsp;&nbsp;&nbsp;**ignore_duplicates:** When set to True, duplicates will be ignored, if set to False(default)
+duplicates will return a 409 code.  
 
