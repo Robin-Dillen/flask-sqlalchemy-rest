@@ -12,7 +12,7 @@ class RestModel(MethodView):
 
     def __init__(self, db, model, ignore_columns=[], json_columns=[], search_columns=[], join_models={},
                  max_page_size=100, deleted_column_key=None, get_decorator=None, post_decorator=None, put_decorator=None,
-                 delete_decorator=None):
+                 delete_decorator=None, ignore_duplicates=False):
         self.db = db
         self.model = model
         self.ignore_columns = ignore_columns
@@ -26,6 +26,7 @@ class RestModel(MethodView):
         self.post = self.post if post_decorator is None else post_decorator(self.post)
         self.put = self.put if put_decorator is None else put_decorator(self.get)
         self.delete = self.delete if delete_decorator is None else delete_decorator(self.get)
+        self.ignore_duplicates = ignore_duplicates
 
     def get(self, id=None):
         if id is None:
@@ -50,12 +51,17 @@ class RestModel(MethodView):
         if request.is_json:
             try:
                 response = []
-                for index, entry in enumerate(list(request.json)):
+                for index, entry in enumerate(list(request.json if type(request.json) is list else [request.json])):
                     obj = self.model()
                     err_msg = self._verify_params(obj, entry)
                     if err_msg:
                         return self._resp(code=400, msg=f"entry no. {index}: {err_msg}")
                     obj = self._update_model_from_dict(obj, entry)
+                    if self.model.query.get(str(obj.id).replace(" ", "").split(",")) is not None:
+                        if self.ignore_duplicates:
+                            continue
+                        else:
+                            return self._resp(code=409, msg=f"entry no. {index}: duplicate primary key")
                     self.db.session.add(obj)
                     response.append({"id": obj.id})
                 self.db.session.commit()

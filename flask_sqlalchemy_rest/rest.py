@@ -27,7 +27,8 @@ class Rest(object):
     def add_model(
             self, model, *, url_name=None, methods=['GET', 'POST', 'PUT', 'DELETE'],
             ignore_columns=[], json_columns=[], search_columns=[], join_models={}, deleted_column_key=None,
-            get_decorator=None, post_decorator=None, put_decorator=None, delete_decorator=None):
+            get_decorator=None, post_decorator=None, put_decorator=None, delete_decorator=None,
+            ignore_duplicates=False):
 
         model_name = model.__tablename__
         blueprint = Blueprint('rest_' + model_name, __name__, url_prefix=self.url_prefix)
@@ -39,7 +40,8 @@ class Rest(object):
             get_decorator=get_decorator,
             post_decorator=post_decorator,
             put_decorator=put_decorator,
-            delete_decorator=delete_decorator
+            delete_decorator=delete_decorator,
+            ignore_duplicates=ignore_duplicates
         )
         if self.auth_decorator:
             view_func = self.auth_decorator(view_func)
