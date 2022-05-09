@@ -6,6 +6,8 @@ from flask import request, jsonify, current_app
 from flask.views import MethodView
 from sqlalchemy.orm.attributes import InstrumentedAttribute
 from sqlalchemy.sql import sqltypes
+from sqlalchemy import func
+from sqlalchemy.engine import Row
 
 
 class RestModel(MethodView):
@@ -111,7 +113,9 @@ class RestModel(MethodView):
 
         list = []
         for row in rows:
-            if isinstance(row, Iterable):
+            if isinstance(row, Row):
+                list.append(row[0])
+            elif isinstance(row, Iterable):
                 data = self._to_dict(row[0])
                 if len(row) > 1 and row[1]:
                     data[row[1].__tablename__] = self._to_dict(row[1])
@@ -180,28 +184,34 @@ class RestModel(MethodView):
     def _filter_with_operator(self, query, coloumn, operator, value):
         if operator == 'eq':
             query = query.filter(coloumn == value)
-        if operator == 'ne':
+        elif operator == 'ne':
             query = query.filter(coloumn != value)
-        if operator == 'gt':
+        elif operator == 'gt':
             query = query.filter(coloumn > value)
-        if operator == 'ge':
+        elif operator == 'ge':
             query = query.filter(coloumn >= value)
-        if operator == 'lt':
+        elif operator == 'lt':
             query = query.filter(coloumn < value)
-        if operator == 'le':
+        elif operator == 'le':
             query = query.filter(coloumn <= value)
-        if operator == 'in':
+        elif operator == 'in':
             query = query.filter(coloumn.in_(value.split(',')))
-        if operator == 'ni':
+        elif operator == 'ni':
             query = query.filter(coloumn.notin_(value.split(',')))
-        if operator == 'ct':
+        elif operator == 'ct':
             query = query.filter(coloumn.contains(value))
-        if operator == 'nc':
+        elif operator == 'nc':
             query = query.filter(~coloumn.contains(value))
-        if operator == 'sw':
+        elif operator == 'sw':
             query = query.filter(coloumn.like(str(value) + '%'))
-        if operator == 'ew':
+        elif operator == 'ew':
             query = query.filter(coloumn.like('%' + str(value)))
+        elif operator == 'min':
+            query = query.with_entities(func.min(coloumn))
+        elif operator == 'max':
+            query = query.with_entities(func.max(coloumn))
+        elif operator == 'avg':
+            query = query.with_entities(func.avg(coloumn))
         return query
 
     def _to_dict(self, obj):
