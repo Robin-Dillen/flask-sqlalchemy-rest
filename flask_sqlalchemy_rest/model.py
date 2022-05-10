@@ -139,6 +139,8 @@ class RestModel(MethodView):
                     if len(ks) > 1:
                         v = None if v == 'null' else v
                         query = self._filter_with_operator(query, col, ks[1], v)
+                    elif len(v) == 0:
+                        query = query.with_entities(col)
                     else:
                         query = query.filter(col == v)
         return query
@@ -212,6 +214,8 @@ class RestModel(MethodView):
             query = query.with_entities(func.max(coloumn))
         elif operator == 'avg':
             query = query.with_entities(func.avg(coloumn))
+        elif operator == "distinct":
+            query = query.distinct(coloumn)
         return query
 
     def _to_dict(self, obj):
