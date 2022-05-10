@@ -9,6 +9,7 @@ from sqlalchemy.sql import sqltypes
 from sqlalchemy import func
 from sqlalchemy.engine import Row
 
+
 class RestModel(MethodView):
 
     def __init__(self, db, model, ignore_columns=[], json_columns=[], search_columns=[], join_models={},
@@ -138,8 +139,6 @@ class RestModel(MethodView):
                     if len(ks) > 1:
                         v = None if v == 'null' else v
                         query = self._filter_with_operator(query, col, ks[1], v)
-                    elif len(v) == 0:
-                        query = query.with_entities(col)
                     else:
                         query = query.filter(col == v)
         return query
@@ -208,16 +207,11 @@ class RestModel(MethodView):
         elif operator == 'ew':
             query = query.filter(coloumn.like('%' + str(value)))
         elif operator == 'min':
-            subq = self.model.query.with_entities(func.min(coloumn)).scalar_subquery()
-            query = query.where(coloumn == subq)
+            query = query.with_entities(func.min(coloumn))
         elif operator == 'max':
-            subq = self.model.query.with_entities(func.max(coloumn)).scalar_subquery()
-            query = query.where(coloumn == subq)
+            query = query.with_entities(func.max(coloumn))
         elif operator == 'avg':
-            subq = self.model.query.with_entities(func.avg(coloumn)).scalar_subquery()
-            query = query.where(coloumn == subq)
-        elif operator == "distinct":
-            query = query.distinct(coloumn)
+            query = query.with_entities(func.avg(coloumn))
         return query
 
     def _to_dict(self, obj):
