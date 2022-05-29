@@ -26,8 +26,8 @@ class RestModel(MethodView):
         # decorate the methods so the users can choose when to execute their code
         self.get = self.get if get_decorator is None else get_decorator(self.get)
         self.post = self.post if post_decorator is None else post_decorator(self.post)
-        self.put = self.put if put_decorator is None else put_decorator(self.get)
-        self.delete = self.delete if delete_decorator is None else delete_decorator(self.get)
+        self.put = self.put if put_decorator is None else put_decorator(self.put)
+        self.delete = self.delete if delete_decorator is None else delete_decorator(self.delete)
         self.ignore_duplicates = ignore_duplicates
 
     def get(self, id=None):
