@@ -1,5 +1,8 @@
 import json
-from collections import Iterable
+try:
+    from collections import Iterable
+except ImportError:
+    from collections.abc import Iterable
 
 from dateutil.parser import parse
 from flask import request, jsonify, current_app
