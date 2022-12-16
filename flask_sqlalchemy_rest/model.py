@@ -116,9 +116,9 @@ class RestModel(MethodView):
 
         list = []
         for row in rows:
-            if isinstance(row, Row):
+            if isinstance(row, Row) and len(row) == 1:
                 list.append(row[0])
-            elif isinstance(row, Iterable):
+            elif isinstance(row, Iterable) or isinstance(row, Row) and len(row) > 1:
                 data = self._to_dict(row[0])
                 if len(row) > 1 and row[1]:
                     data[row[1].__tablename__] = self._to_dict(row[1])
