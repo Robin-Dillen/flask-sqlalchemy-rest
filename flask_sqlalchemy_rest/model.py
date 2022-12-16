@@ -100,7 +100,7 @@ class RestModel(MethodView):
         page_size = request.args.get('_page_size', 10)
         page_size = int(page_size) if isinstance(page, int) or page_size.isdigit() else 10
         if self.max_page_size is not None and self.max_page_size > 0:
-            page_size = page_size if page_size <= self.max_page_size else self.max_page_size
+            page_size = min(page_size, self.max_page_size)
         sort = request.args.get('_sort')
         desc = request.args.get('_desc')
         search = request.args.get('_search')
@@ -150,14 +150,13 @@ class RestModel(MethodView):
 
     def _filter_with_join(self, query, join_table):
         if join_table and join_table in self.join_models:
-            obj = self.join_models.get(join_table)
-            if obj:
+            if obj := self.join_models.get(join_table):
                 model = obj.get('model')
                 column_a = obj.get('column_a')
                 column_b = obj.get('column_b')
                 inner_join = obj.get('inner_join')
                 if column_a and isinstance(column_a, InstrumentedAttribute) \
-                        and column_b and isinstance(column_b, InstrumentedAttribute):
+                            and column_b and isinstance(column_b, InstrumentedAttribute):
                     query = self.db.session.query(self.model, model)
                     if inner_join is True:
                         query = query.join(model, column_a == column_b)
@@ -167,15 +166,13 @@ class RestModel(MethodView):
         return query
 
     def _filter_with_search(self, query, search):
-        if search and self.search_columns:
-            if self.db.engine.name != 'sqlite':
-                # sqlite has no concat function
-                cols = []
-                for col_name in self.search_columns:
-                    if hasattr(self.model, col_name):
-                        cols.append(getattr(self.model, col_name))
-                if cols:
-                    query = query.filter(self.db.func.concat_ws('_', *cols).contains(search))
+        if search and self.search_columns and self.db.engine.name != 'sqlite':
+            if cols := [
+                getattr(self.model, col_name)
+                for col_name in self.search_columns
+                if hasattr(self.model, col_name)
+            ]:
+                query = query.filter(self.db.func.concat_ws('_', *cols).contains(search))
         return query
 
     def _filter_with_sort(self, query, sort, desc):
@@ -204,13 +201,21 @@ class RestModel(MethodView):
         elif operator == 'ni':
             query = query.filter(coloumn.notin_(value.split(',')))
         elif operator == 'ct':
+            query = query.filter(coloumn.contains(func.ilike(value)))
+        elif operator == 'Ct':
             query = query.filter(coloumn.contains(value))
         elif operator == 'nc':
-            query = query.filter(~coloumn.contains(value))
+            query = query.filter(~coloumn.contains(func.ilike(value)))
+        elif operator == 'Nc':
+            query = query.filter(~coloumn.contains(func.like(value)))
         elif operator == 'sw':
-            query = query.filter(coloumn.like(str(value) + '%'))
+            query = query.filter(coloumn.ilike(f'{str(value)}%'))
+        elif operator == 'Sw':
+            query = query.filter(coloumn.like(f'{str(value)}%'))
         elif operator == 'ew':
-            query = query.filter(coloumn.like('%' + str(value)))
+            query = query.filter(coloumn.ilike(f'%{str(value)}'))
+        elif operator == 'Ew':
+            query = query.filter(coloumn.like(f'%{str(value)}'))
         elif operator == 'min':
             query = query.with_entities(func.min(coloumn))
         elif operator == 'max':

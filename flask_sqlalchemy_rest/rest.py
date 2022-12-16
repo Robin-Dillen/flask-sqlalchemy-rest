@@ -31,7 +31,7 @@ class Rest(object):
             ignore_duplicates=False):
 
         model_name = model.__tablename__
-        blueprint = Blueprint('rest_' + model_name, __name__, url_prefix=self.url_prefix)
+        blueprint = Blueprint(f'rest_{model_name}', __name__, url_prefix=self.url_prefix)
         view_func = RestModel.as_view(
             model_name, db=self.db, model=model, ignore_columns=ignore_columns,
             json_columns=json_columns, search_columns=search_columns,
@@ -45,11 +45,17 @@ class Rest(object):
         )
         if self.auth_decorator:
             view_func = self.auth_decorator(view_func)
-        url_name = url_name if url_name else model_name
+        url_name = url_name or model_name
 
-        blueprint.add_url_rule(view_func=view_func, rule='/' + url_name,
-                               methods=list(set(methods).intersection(set(['GET', 'POST']))))
-        blueprint.add_url_rule(view_func=view_func, rule='/' + url_name + '/<id>',
-                               methods=list(set(methods).intersection(set(['GET', 'PUT', 'DELETE']))))
+        blueprint.add_url_rule(
+            view_func=view_func,
+            rule=f'/{url_name}',
+            methods=list(set(methods).intersection({'GET', 'POST'})),
+        )
+        blueprint.add_url_rule(
+            view_func=view_func,
+            rule=f'/{url_name}/<id>',
+            methods=list(set(methods).intersection({'GET', 'PUT', 'DELETE'})),
+        )
         if self.app:
             self.app.register_blueprint(blueprint)
