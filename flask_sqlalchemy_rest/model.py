@@ -58,18 +58,18 @@ class RestModel(MethodView):
                 response = []
                 for index, entry in enumerate(list(request.json if type(request.json) is list else [request.json])):
                     obj = self.model()
-                    err_msg = self._verify_params(obj, entry)
-                    if err_msg:
+                    if err_msg := self._verify_params(obj, entry):
                         return self._resp(code=400, msg=f"entry no. {index}: {err_msg}")
                     obj = self._update_model_from_dict(obj, entry)
-                    if self.model.query.get(str(obj.id).replace(" ", "").split(",")) is not None:
+                    if obj.id is not None and self.model.query.get(str(obj.id).replace(" ", "").split(",")) is not None:
                         if self.ignore_duplicates:
                             continue
                         else:
                             return self._resp(code=409, msg=f"entry no. {index}: duplicate primary key")
                     self.db.session.add(obj)
-                    response.append({"id": obj.id})
+                    response.append(obj)
                 self.db.session.commit()
+                response = {'id': obj.id for obj in response}
                 return self._resp(data=response)
             except Exception as e:
                 current_app.logger.error(str(e))
